@@ -30,7 +30,7 @@ $email = trim($data['email']);
 
 
 // Prepare and execute query
-$stmt = $conn->prepare("SELECT id, password, firstname, middlename, lastname, address, birthdate, contactnumber, gender, civilstatus, email, role FROM registered WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, password, firstname, middlename, lastname, address, birthdate, contactnumber, gender, civilstatus, email, status, role FROM registered WHERE email = ?");
 
 if (!$stmt) {
     echo json_encode([
@@ -61,7 +61,8 @@ if ($row = $result->fetch_assoc()) {
         "contact" => $row['contactnumber'],
         "gender" => $row['gender'],
         "civilstatus" => $row['civilstatus'],
-        "email" => $row['email']
+        "email" => $row['email'],
+        "status" => $row['status']
     ]
         ]);
     } else {

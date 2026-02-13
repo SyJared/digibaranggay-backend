@@ -37,6 +37,8 @@ $address    = $user['address'];
 $birthdate  = $user['birthdate'];
 $purpose    = trim($data['purpose']);
 $dateUpdated = date("Y-m-d H:i:s");
+$payment = isset($data['payment']) ? (float)$data['payment'] : 0.00;
+
 
 
 $checkSql = "SELECT * FROM requests WHERE id = ? AND transaction = ?";
@@ -55,8 +57,8 @@ if ($checkResult->num_rows > 0) {
 
 $sql = "
     INSERT INTO requests
-    (id, transaction, name, address, birthdate, purpose)
-    VALUES (?, ?, ?, ?, ?, ?)
+    (id, transaction, name, address, birthdate, purpose, pay)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
 ";
 
 $stmt = $conn->prepare($sql);
@@ -70,13 +72,14 @@ if (!$stmt) {
 }
 
 $stmt->bind_param(
-    "isssss",
+    "isssssd",
     $id,
     $transaction,
     $name,
     $address,
     $birthdate,
     $purpose,
+    $payment
 
 );
 
