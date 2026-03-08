@@ -4,6 +4,7 @@ include 'index.php';
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -59,22 +60,33 @@ if ($pin !== $storedPin) {
     ]);
     exit();
 }
+// ===== CHECK IF USER CAN REQUEST AGAIN =====
+$checkSql = "
+    SELECT request_again
+    FROM requests
+    WHERE id = ?
+    AND transaction = ?
+    ORDER BY id DESC
+    LIMIT 1
+";
 
-// ===== CHECK EXISTING REQUEST =====
-$checkSql = "SELECT * FROM requests WHERE id = ? AND transaction = ?";
 $checkStmt = $conn->prepare($checkSql);
 $checkStmt->bind_param("is", $id, $transaction);
 $checkStmt->execute();
 $checkResult = $checkStmt->get_result();
 
+// If request exists, check request_again flag
 if ($checkResult->num_rows > 0) {
-    echo json_encode([
-        "success" => false,
-        "message" => "You already submitted a request for this transaction"
-    ]);
-    exit();
-}
+    $row = $checkResult->fetch_assoc();
 
+    if ((int)$row['request_again'] === 0) {
+        echo json_encode([
+            "success" => false,
+            "message" => "You already submitted a request. Please wait for admin permission."
+        ]);
+        exit();
+    }
+}
 // ===== INSERT REQUEST =====
 $sql = "INSERT INTO requests (id, transaction, name, address, birthdate, purpose, pay) VALUES (?, ?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
@@ -90,20 +102,51 @@ if (!$stmt) {
 $stmt->bind_param("isssssd", $id, $transaction, $name, $address, $birthdate, $purpose, $payment);
 
 if ($stmt->execute()) {
+
     $lastId = $conn->insert_id;
+
     $transactionId = $id . str_pad($lastId, 3, '0', STR_PAD_LEFT);
 
-    // Update the row with transacid
-    $updateStmt = $conn->prepare("UPDATE requests SET transactionid = ? WHERE id = ?");
-    $updateStmt->bind_param("ii", $transactionId, $lastId);
+    // Update transaction ID
+    $updateStmt = $conn->prepare("
+        UPDATE requests 
+        SET transactionid = ? 
+        WHERE id = ?
+    ");
+
+    $updateStmt->bind_param("si", $transactionId, $lastId);
     $updateStmt->execute();
     $updateStmt->close();
+
+    /*
+    ===============================
+    CREATE NOTIFICATION (NEW REQUEST)
+    ===============================
+    */
+
+    $notif = $conn->prepare("
+        INSERT INTO notifications 
+        (user_id, transaction, type, message, is_read)
+        VALUES (?, ?, 'new', ?, 0)
+    ");
+
+    $notifMessage = "New request submitted for " . $transaction;
+
+    $notif->bind_param(
+        "iss",
+        $id,
+        $transaction,
+        $notifMessage
+    );
+
+    $notif->execute();
+    $notif->close();
 
     echo json_encode([
         "success" => true,
         "message" => "Your request is successful"
     ]);
-} else {
+}else {
     echo json_encode([
         "success" => false,
         "message" => "Database insert failed: " . $stmt->error

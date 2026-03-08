@@ -34,6 +34,13 @@ $stmt->execute();
 
 $response = ["success" => true, "message" => "Status updated"];
 
+// Fetch user info for email
+$stmtUser = $conn->prepare("SELECT firstname, middlename, lastname, email FROM registered WHERE id=?");
+$stmtUser->bind_param("i", $id);
+$stmtUser->execute();
+$result = $stmtUser->get_result();
+$user = $result->fetch_assoc();
+
 if ($status === "Accepted") {
     // Generate 4-digit PIN
     $pin = rand(1000, 9999);
@@ -43,14 +50,7 @@ if ($status === "Accepted") {
     $stmtPin->bind_param("ii", $pin, $id);
     $stmtPin->execute();
 
-    // Fetch user name & email
-    $stmtUser = $conn->prepare("SELECT firstname, middlename, lastname, email FROM registered WHERE id=?");
-    $stmtUser->bind_param("i", $id);
-    $stmtUser->execute();
-    $result = $stmtUser->get_result();
-    $user = $result->fetch_assoc();
-
-    // Send email
+    // Send Accepted email
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
@@ -78,6 +78,36 @@ if ($status === "Accepted") {
         $response['pin'] = $pin; // optional, can return to frontend
     } catch (Exception $e) {
         $response['message'] .= " But email failed: {$mail->ErrorInfo}";
+    }
+}
+
+if ($status === "Rejected") {
+    // Send Rejected email
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'digibarangay@gmail.com'; // Gmail
+        $mail->Password = 'ohnj phhf pcec rcmb';    // App Password
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+
+        $mail->setFrom('digibarangay@gmail.com', 'DigiBarangay');
+        $mail->addAddress($user['email'], "{$user['firstname']} {$user['lastname']}");
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Your Account Has Been Rejected';
+        $mail->Body = "
+            <p>Hi {$user['firstname']},</p>
+            <p>We regret to inform you that your account has been <strong>rejected</strong>.</p>
+            <p>If you believe this is an error or want more information, please contact the barangay office.</p>
+        ";
+
+        $mail->send();
+        $response['message'] .= " Rejection email sent.";
+    } catch (Exception $e) {
+        $response['message'] .= " But rejection email failed: {$mail->ErrorInfo}";
     }
 }
 
