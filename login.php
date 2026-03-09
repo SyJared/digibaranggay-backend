@@ -24,7 +24,13 @@ if (!isset($data['email']) || !isset($data['password'])) {
 $email = trim($data['email']);
 $password = trim($data['password']);
 
-$stmt = $conn->prepare("SELECT id, password, firstname, middlename, lastname, address, birthdate, contactnumber, gender, civilstatus, email, housenumber, status, role FROM registered WHERE email = ?");
+$stmt = $conn->prepare("
+    SELECT id, password, firstname, middlename, lastname, address, birthdate, contactnumber, gender, civilstatus, email, housenumber, status, role 
+    FROM registered 
+    WHERE email = ? AND status = 'Accepted'
+    ORDER BY id DESC 
+    LIMIT 1
+");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
