@@ -57,7 +57,7 @@ while ($row = $expiredResult->fetch_assoc()) {
 }
 
 // 4️⃣ Fetch all requests
-$sql = "SELECT * FROM requests";
+$sql = "SELECT * FROM requests ORDER BY date DESC";
 $result = $conn->query($sql);
 
 if (!$result) {

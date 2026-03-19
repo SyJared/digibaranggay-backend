@@ -10,7 +10,7 @@ if ($conn->connect_error) {
   exit;
 }
 
-$sql = "SELECT * FROM registered";
+$sql = "SELECT * FROM registered ORDER BY dateregistered DESC";
 $result = $conn->query($sql);
 
 $data = [];
