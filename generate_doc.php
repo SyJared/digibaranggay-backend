@@ -4,30 +4,29 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
-// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-require 'vendor/autoload.php'; // Composer autoload
-require 'index.php'; // include your MySQLi connection
-
+require 'vendor/autoload.php';
+require 'index.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 
 // ----------------------
-// 1️⃣ Get the ID from POST
+// 1️⃣ Get the ID and transaction from POST
 // ----------------------
 $id = $_POST['id'] ?? null;
+$transaction = $_POST['transaction'] ?? null;
 
-if (!$id) {
+if (!$id || !$transaction) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'No ID provided']);
+    echo json_encode(['success' => false, 'message' => 'Missing ID or transaction type']);
     exit;
 }
 
 // ----------------------
-// 2️⃣ Fetch user info using MySQLi
+// 2️⃣ Fetch user info
 // ----------------------
 $stmt = $conn->prepare("SELECT firstname, middlename, lastname, contactnumber, civilstatus, housenumber, birthdate, gender, sitio, street FROM registered WHERE id = ?");
 $stmt->bind_param("i", $id);
@@ -42,26 +41,71 @@ if (!$user) {
 }
 
 // ----------------------
-// 3️⃣ Compute age from birthdate
+// 3️⃣ Compute age
 // ----------------------
 $birthDate = new DateTime($user['birthdate']);
 $today = new DateTime();
 $age = $today->diff($birthDate)->y;
 
 // ----------------------
-// 4️⃣ Load DOCX template
+// 4️⃣ Map transaction to template
 // ----------------------
-$templatePath = __DIR__ . '/templates/barangayID.docx';
+$templates = [
+    "Barangay ID" => "barangayID.docx",
+    "Clearance" => "clearance.docx",
+    "Indigency" => "indigency.docx",
+    "Residency" => "residency.docx",
+    "Business Permit" => "businessPermit.docx",
+    "Solo Parent" => "soloParent.docx",
+    "First Time Jobseeker" => "firstTimeJobseeker.docx",
+    "Other" => "other.docx"
+];
+
+if (!isset($templates[$transaction])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid transaction type']);
+    exit;
+}
+
+$templatePath = __DIR__ . '/templates/' . $templates[$transaction];
+
 if (!file_exists($templatePath)) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Template not found']);
+    echo json_encode(['success' => false, 'message' => 'Template file not found']);
     exit;
 }
 
 $template = new TemplateProcessor($templatePath);
 
 // ----------------------
-// 5️⃣ Set values in template
+// 5️⃣ Fetch emergency contact info
+// ----------------------
+$emgStmt = $conn->prepare("SELECT emergency_name, emergency_relation, emergency_contact, emergency_address FROM emergency WHERE user_id = ?");
+$emgStmt->bind_param("i", $id);
+$emgStmt->execute();
+$emgResult = $emgStmt->get_result();
+$emg = $emgResult->fetch_assoc() ?? [
+    'emergency_name' => '',
+    'emergency_relation' => '',
+    'emergency_contact' => '',
+    'emergency_address' => ''
+];
+
+// ----------------------
+// 5️⃣ Fetch additional info (height & weight)
+// ----------------------
+$addStmt = $conn->prepare("SELECT height, weight, tin FROM additional_info WHERE user_id = ?");
+$addStmt->bind_param("i", $id);
+$addStmt->execute();
+$addResult = $addStmt->get_result();
+$additionalInfo = $addResult->fetch_assoc() ?? [
+    'height' => '',
+    'weight' => '',
+    'tin' => ''
+];
+
+// ----------------------
+// 6️⃣ Set template values
 // ----------------------
 $template->setValue('firstname', $user['firstname']);
 $template->setValue('middlename', $user['middlename']);
@@ -75,15 +119,39 @@ $template->setValue('age', $age);
 $template->setValue('sitio', $user['sitio']);
 $template->setValue('street', $user['street']);
 
+// Add emergency contact values
+$template->setValue('emergencyName', $emg['emergency_name']);
+$template->setValue('emergencyRelation', $emg['emergency_relation']);
+$template->setValue('emergencyContact', $emg['emergency_contact']);
+$template->setValue('emergencyAddress', $emg['emergency_address']);
+
+// Add additional info values
+$template->setValue('height', $additionalInfo['height']);
+$template->setValue('weight', $additionalInfo['weight']);
+$template->setValue('tin', $additionalInfo['tin']);
+
+$today = new DateTime();
+$expiry = (clone $today)->modify('+1 year');
+
+$template->setValue('date', $today->format('Y-m-d'));   // or 'F j, Y' for readable format
+$template->setValue('expiry', $expiry->format('Y-m-d'));
+
 // ----------------------
-// 6️⃣ Save and output
+// 7️⃣ Save and output
 // ----------------------
-$tempFile = tempnam(sys_get_temp_dir(), 'BarangayID_'.$user['firstname']) . '.docx';
+$cleanTransaction = preg_replace('/[^A-Za-z0-9]/', '_', $transaction);
+$cleanFirstname = preg_replace('/[^A-Za-z0-9]/', '', $user['firstname']);
+
+$fileName = $cleanTransaction . '_' . $cleanFirstname . '.docx';
+
+$tempFile = tempnam(sys_get_temp_dir(), $fileName);
+rename($tempFile, $tempFile .= '.docx');
+
 $template->saveAs($tempFile);
 
 header("Content-Description: File Transfer");
 header("Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-header('Content-Disposition: attachment; filename="BarangayID.docx"');
+header('Content-Disposition: attachment; filename="' . $fileName . '"');
 header("Content-Transfer-Encoding: binary");
 header('Expires: 0');
 header('Cache-Control: must-revalidate');
@@ -93,3 +161,4 @@ header('Content-Length: ' . filesize($tempFile));
 readfile($tempFile);
 unlink($tempFile);
 exit;
+?>
