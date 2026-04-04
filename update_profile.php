@@ -22,7 +22,9 @@ $contactnumber = $data['contactnumber'] ?? '';
 $birthdate = $data['birthdate'] ?? '';
 $gender = $data['gender'] ?? '';
 $civilstatus = $data['civilstatus'] ?? '';
-$address = $data['address'] ?? '';
+$sitio = $data['sitio'] ?? '';
+$street = $data['street'] ?? '';
+$middlename = $data['middlename'] ?? '';
 
 // Optional: validate email
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -33,12 +35,12 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 // Prepare and execute update
 $stmt = $conn->prepare("
     UPDATE registered
-    SET firstname = ?, lastname = ?, email = ?, contactnumber = ?, birthdate = ?, gender = ?, civilstatus = ?, address = ?
+    SET firstname = ?, lastname = ?, email = ?, contactnumber = ?, birthdate = ?, gender = ?, civilstatus = ?, sitio = ?, street = ?, middlename = ?
     WHERE id = ?
 ");
 
 $stmt->bind_param(
-    "ssssssssi",
+    "ssssssssssi",
     $firstname,
     $lastname,
     $email,
@@ -46,7 +48,9 @@ $stmt->bind_param(
     $birthdate,
     $gender,
     $civilstatus,
-    $address,
+    $sitio,
+    $street,
+    $middlename,
     $id
 );
 

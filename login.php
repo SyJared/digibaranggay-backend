@@ -25,7 +25,7 @@ $email = trim($data['email']);
 $password = trim($data['password']);
 
 $stmt = $conn->prepare("
-    SELECT id, password, firstname, middlename, lastname, address, birthdate, contactnumber, gender, civilstatus, email, housenumber, status, role 
+    SELECT id, password, firstname, middlename, lastname, sitio, street, birthdate, contactnumber, gender, civilstatus, email, housenumber, status, role 
     FROM registered 
     WHERE email = ? AND status = 'Accepted'
     ORDER BY id DESC 
@@ -52,7 +52,8 @@ if ($row = $result->fetch_assoc()) {
             "email" => $row['email'],
             "status" => $row['status'],
             "household" => $row['housenumber'] ?? "N/A",
-            "address" => $row['address'],
+            "sitio" => $row['sitio'],
+            "street" => $row['street'],
             "birthdate" => $row['birthdate'],
             "contactnumber" => $row['contactnumber'] ?? "N/A",
             "gender" => $row['gender'],

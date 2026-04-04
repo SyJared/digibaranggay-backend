@@ -29,7 +29,7 @@ if (!$id) {
 // ----------------------
 // 2️⃣ Fetch user info using MySQLi
 // ----------------------
-$stmt = $conn->prepare("SELECT firstname, middlename, lastname, contactnumber, civilstatus, housenumber, birthdate, gender FROM registered WHERE id = ?");
+$stmt = $conn->prepare("SELECT firstname, middlename, lastname, contactnumber, civilstatus, housenumber, birthdate, gender, sitio, street FROM registered WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -72,6 +72,8 @@ $template->setValue('housenumber', $user['housenumber']);
 $template->setValue('birthdate', $user['birthdate']);
 $template->setValue('gender', $user['gender']);
 $template->setValue('age', $age);
+$template->setValue('sitio', $user['sitio']);
+$template->setValue('street', $user['street']);
 
 // ----------------------
 // 6️⃣ Save and output

@@ -23,7 +23,8 @@ $firstname     = $conn->real_escape_string($data['firstname']);
 $middlename    = $conn->real_escape_string($data['middlename'] ?? '');
 $lastname      = $conn->real_escape_string($data['lastname']);
 $email         = $conn->real_escape_string($data['email']);
-$address       = $conn->real_escape_string($data['address'] ?? '');
+$sitio  = $conn->real_escape_string($data['sitio'] ?? '');
+$street = $conn->real_escape_string($data['street'] ?? '');
 $birthdate     = $conn->real_escape_string($data['birthdate'] ?? '');
 $password      = password_hash(trim($data['password']), PASSWORD_DEFAULT);
 $gender        = $conn->real_escape_string($data['gender']);
@@ -48,9 +49,9 @@ if ($check->num_rows > 0) {
 
 // Insert new user (always insert a new row)
 $sql = "INSERT INTO registered 
-        (firstname, middlename, lastname, email, address, birthdate, password, gender, housenumber, contactnumber, status)
+        (firstname, middlename, lastname, email, sitio, street, birthdate, password, gender, housenumber, contactnumber, status)
         VALUES 
-        ('$firstname', '$middlename', '$lastname', '$email', '$address', '$birthdate', '$password', '$gender', '$housenumber', '$contactnumber', 'Pending')";
+        ('$firstname', '$middlename', '$lastname', '$email', '$sitio', '$street', '$birthdate', '$password', '$gender', '$housenumber', '$contactnumber', 'Pending')";
 
 if ($conn->query($sql) === TRUE) {
     $user_id = $conn->insert_id;
