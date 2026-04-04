@@ -54,8 +54,8 @@ $name = $user['firstname'] . ' ' . $user['middlename'] . ' ' . $user['lastname']
 $templates = [
     "Barangay ID" => "barangayID.docx",
     "Working clearance" => "working-clearance.docx",
-    "Indigency" => "indigency.docx",
-    "Residency" => "residency.docx",
+    "Brgy. clearance" => "barangay-clearance.docx",
+    "First job seeker" => "firstjobseeker.docx",
     "Business Permit" => "businessPermit.docx",
     "Solo Parent" => "soloParent.docx",
     "First Time Jobseeker" => "firstTimeJobseeker.docx",
@@ -106,8 +106,25 @@ $additionalInfo = $addResult->fetch_assoc() ?? [
     'position' => '',
     'employer' => ''
 ];
+// format and things
 $name = $user['firstname'] . ' ' . $user['middlename'] . '. ' . $user['lastname'];
 $address = $user['street'] . ', ' . $user['sitio'];
+function dayWithSuffix($day) {
+    if (!in_array(($day % 100), [11,12,13])) {
+        switch ($day % 10) {
+            case 1: return $day.'st';
+            case 2: return $day.'nd';
+            case 3: return $day.'rd';
+        }
+    }
+    return $day.'th';
+}
+$today = new DateTime(); // or your specific date
+$day = (int)$today->format('d');
+$month = $today->format('F'); // Full month name
+$year = $today->format('Y');
+
+$formattedDate = dayWithSuffix($day) . " of " . $month . " " . $year;
 // ----------------------
 // 6️⃣ Set template values generically
 // ----------------------
@@ -125,6 +142,7 @@ $template->setValue('street', $user['street']);
 $template->setValue('purpose', $purpose);
 $template->setValue('name', $name);
 $template->setValue('address', $address);
+$template->setValue('formattedDate', $formattedDate);
 
 // Add emergency contact values brgyid
 $template->setValue('emergencyName', $emg['emergency_name']);
