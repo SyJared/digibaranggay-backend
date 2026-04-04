@@ -44,7 +44,7 @@ if ($check->num_rows > 0) {
 } else {
     // INSERT
     $stmt = $conn->prepare("INSERT INTO additional_info (user_id, height, weight, tin, position, employer) VALUES (?,?,?,?,?,?)");
-    $stmt->bind_param("iddsssi",$user_id,$height,$weight,$tin,$position,$employer);
+    $stmt->bind_param("isssss",$user_id,$height,$weight,$tin,$position,$employer);
 }
 
 if ($stmt->execute()) {

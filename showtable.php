@@ -1,31 +1,39 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
 header("Content-Type: application/json; charset=UTF-8");
 
-include 'index.php';
+include 'index.php'; // your DB connection
 
 if ($conn->connect_error) {
-  echo json_encode(["success" => false, "message" => "DB failed"]);
-  exit;
+    echo json_encode(["success" => false, "message" => "DB connection failed"]);
+    exit;
 }
 
-$sql = "SELECT * FROM registered ORDER BY dateregistered DESC";
+// Get all users with additional info (LEFT JOIN in case some users have no additional info)
+$sql = "SELECT r.*, 
+        a.height, a.weight, a.tin, a.position, a.employer,
+        e.emergency_name, e.emergency_address, e.emergency_relation, e.emergency_contact
+        FROM registered r
+        LEFT JOIN additional_info a ON r.id = a.user_id
+        LEFT JOIN emergency e ON r.id = e.user_id
+        ORDER BY r.dateregistered DESC";
+
 $result = $conn->query($sql);
 
-$data = [];
-if(!$result){
-  echo json_encode([
-    'success' => false,
-    'message' => 'query failed'
-  ]);
-  exit();
+if (!$result) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Query failed: " . $conn->error
+    ]);
+    exit();
 }
+
+$data = [];
 while ($row = $result->fetch_assoc()) {
-  $data[] = $row;
+    $data[] = $row;
 }
 
 echo json_encode([
-  "success" => true,
-  "data" => $data
+    "success" => true,
+    "data" => $data
 ]);

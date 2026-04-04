@@ -74,7 +74,7 @@ if ($status === "Accepted") {
         ";
 
         $mail->send();
-        $response['message'] .= " Email sent.";
+        $response['message'] .= ", Email sent.";
         $response['pin'] = $pin; // optional, can return to frontend
     } catch (Exception $e) {
         $response['message'] .= " But email failed: {$mail->ErrorInfo}";
