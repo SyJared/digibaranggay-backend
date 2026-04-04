@@ -28,6 +28,8 @@ $data = json_decode(file_get_contents("php://input"), true);
 $height = $conn->real_escape_string($data['height']);
 $weight = $conn->real_escape_string($data['weight']);
 $tin = $conn->real_escape_string($data['tin']);
+$position = $conn->real_escape_string($data['position'] ?? '');
+$employer = $conn->real_escape_string($data['employer'] ?? '');
 
 // Check if exists
 $check = $conn->prepare("SELECT user_id FROM additional_info WHERE user_id=?");
@@ -37,12 +39,12 @@ $check->store_result();
 
 if ($check->num_rows > 0) {
     // UPDATE
-    $stmt = $conn->prepare("UPDATE additional_info SET height=?, weight=?, tin=? WHERE user_id=?");
-    $stmt->bind_param("ddsi",$height,$weight,$tin,$user_id);
+    $stmt = $conn->prepare("UPDATE additional_info SET height=?, weight=?, tin=?, position=?, employer=? WHERE user_id=?");
+    $stmt->bind_param("ddsssi",$height,$weight,$tin,$position,$employer,$user_id);
 } else {
     // INSERT
-    $stmt = $conn->prepare("INSERT INTO additional_info (user_id, height, weight, tin) VALUES (?,?,?,?)");
-    $stmt->bind_param("idds",$user_id,$height,$weight,$tin);
+    $stmt = $conn->prepare("INSERT INTO additional_info (user_id, height, weight, tin, position, employer) VALUES (?,?,?,?,?,?)");
+    $stmt->bind_param("iddsssi",$user_id,$height,$weight,$tin,$position,$employer);
 }
 
 if ($stmt->execute()) {

@@ -18,6 +18,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 // ----------------------
 $id = $_POST['id'] ?? null;
 $transaction = $_POST['transaction'] ?? null;
+$purpose = $_POST['purpose'] ?? 'N/A';
 
 if (!$id || !$transaction) {
     http_response_code(400);
@@ -41,18 +42,18 @@ if (!$user) {
 }
 
 // ----------------------
-// 3️⃣ Compute age
+// 3️⃣ Compute age and fullname
 // ----------------------
 $birthDate = new DateTime($user['birthdate']);
 $today = new DateTime();
 $age = $today->diff($birthDate)->y;
-
+$name = $user['firstname'] . ' ' . $user['middlename'] . ' ' . $user['lastname'];
 // ----------------------
 // 4️⃣ Map transaction to template
 // ----------------------
 $templates = [
     "Barangay ID" => "barangayID.docx",
-    "Clearance" => "clearance.docx",
+    "Working clearance" => "working-clearance.docx",
     "Indigency" => "indigency.docx",
     "Residency" => "residency.docx",
     "Business Permit" => "businessPermit.docx",
@@ -94,18 +95,21 @@ $emg = $emgResult->fetch_assoc() ?? [
 // ----------------------
 // 5️⃣ Fetch additional info (height & weight)
 // ----------------------
-$addStmt = $conn->prepare("SELECT height, weight, tin FROM additional_info WHERE user_id = ?");
+$addStmt = $conn->prepare("SELECT height, weight, tin, position, employer FROM additional_info WHERE user_id = ?");
 $addStmt->bind_param("i", $id);
 $addStmt->execute();
 $addResult = $addStmt->get_result();
 $additionalInfo = $addResult->fetch_assoc() ?? [
     'height' => '',
     'weight' => '',
-    'tin' => ''
+    'tin' => '',
+    'position' => '',
+    'employer' => ''
 ];
-
+$name = $user['firstname'] . ' ' . $user['middlename'] . '. ' . $user['lastname'];
+$address = $user['street'] . ', ' . $user['sitio'];
 // ----------------------
-// 6️⃣ Set template values
+// 6️⃣ Set template values generically
 // ----------------------
 $template->setValue('firstname', $user['firstname']);
 $template->setValue('middlename', $user['middlename']);
@@ -118,17 +122,24 @@ $template->setValue('gender', $user['gender']);
 $template->setValue('age', $age);
 $template->setValue('sitio', $user['sitio']);
 $template->setValue('street', $user['street']);
+$template->setValue('purpose', $purpose);
+$template->setValue('name', $name);
+$template->setValue('address', $address);
 
-// Add emergency contact values
+// Add emergency contact values brgyid
 $template->setValue('emergencyName', $emg['emergency_name']);
 $template->setValue('emergencyRelation', $emg['emergency_relation']);
 $template->setValue('emergencyContact', $emg['emergency_contact']);
 $template->setValue('emergencyAddress', $emg['emergency_address']);
 
-// Add additional info values
+// Add additional info values brgyid
 $template->setValue('height', $additionalInfo['height']);
 $template->setValue('weight', $additionalInfo['weight']);
 $template->setValue('tin', $additionalInfo['tin']);
+
+// for working clearance
+$template->setValue('position', $additionalInfo['position']);
+$template->setValue('employer', $additionalInfo['employer']);
 
 $today = new DateTime();
 $expiry = (clone $today)->modify('+1 year');
