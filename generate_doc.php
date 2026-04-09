@@ -1,5 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Origin: https://digibarangay.online");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
@@ -68,7 +68,7 @@ if (!isset($templates[$transaction])) {
     exit;
 }
 
-$templatePath = __DIR__ . '/templates/' . $templates[$transaction];
+$templatePath = $_SERVER['DOCUMENT_ROOT'] . '/templates/' . $templates[$transaction];
 
 if (!file_exists($templatePath)) {
     http_response_code(500);

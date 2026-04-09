@@ -2,7 +2,7 @@
 session_start();
 include 'index.php';
 
-header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Origin: https://digibarangay.online");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -16,7 +16,7 @@ if (!isset($_SESSION['user']['id'])) {
 $user_id = $_SESSION['user']['id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $conn->prepare("SELECT height, weight, tin FROM additional_info WHERE user_id=?");
+    $stmt = $conn->prepare("SELECT height, weight, tin, position, employer   FROM additional_info WHERE user_id=?");
     $stmt->bind_param("i",$user_id);
     $stmt->execute();
     $res = $stmt->get_result();
