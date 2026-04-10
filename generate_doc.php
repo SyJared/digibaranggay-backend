@@ -68,7 +68,7 @@ if (!isset($templates[$transaction])) {
     exit;
 }
 
-$templatePath = $_SERVER['DOCUMENT_ROOT'] . '/templates/' . $templates[$transaction];
+$templatePath = $_SERVER['DOCUMENT_ROOT'] . '/templates/' . '/api/' . $templates[$transaction];
 
 if (!file_exists($templatePath)) {
     http_response_code(500);

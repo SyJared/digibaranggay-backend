@@ -116,31 +116,37 @@ if($action === 'remove'){
 
 }
 
-if($_SERVER['REQUEST_METHOD'] === 'GET'){
-$sql = "SELECT * from announcements";
-$result = $conn->query($sql);
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-$data =[];
+    $sql = "SELECT * FROM announcements";
+    $result = $conn->query($sql);
 
-if(!$result){
-  echo json_encode([
-    'success' => false,
-    'message' => 'query failed'
-  ]);
-  exit();
-}
-while($row = $result->fetch_assoc()){
-  $data[]=$row;
-};
-if(count($data)===0){
-  echo json_encode([
-    'success' => false,
-    'message' => 'There are no announcement'
-  ]);
-}
-echo json_encode([
-  'success' => true,
-  'data'=> $data
-]);
+    if (!$result) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'query failed'
+        ]);
+        exit();
+    }
 
+    $data = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+
+    if (count($data) === 0) {
+        echo json_encode([
+            'success' => true,
+            'data' => [],
+            'message' => 'No announcements yet'
+        ]);
+        exit();
+    }
+
+    echo json_encode([
+        'success' => true,
+        'data' => $data
+    ]);
+    exit();
 }
