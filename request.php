@@ -90,7 +90,7 @@ if ($checkResult->num_rows > 0) {
     }
 }
 // ===== INSERT REQUEST =====
-$sql = "INSERT INTO requests (id, transaction, name, address, birthdate, purpose, pay) VALUES (?, ?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO requests (id, transaction, name, address, birthdate, purpose, pay, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
