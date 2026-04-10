@@ -15,5 +15,8 @@ if ($conn->connect_error) {
 }
 
 // Optional: set charset
+
 $conn->set_charset("utf8");
+date_default_timezone_set('Asia/Manila');
+$conn->query("SET time_zone = '+08:00'");
 ?>
