@@ -17,7 +17,7 @@ $id = $data['id'] ?? null;
 $transaction = $data['transaction'] ?? null;
 $status = $data['status'] ?? null;
 $pickup = $data['pickup'] ?? null;
-$pay = $data['pay'] ?? null;
+
 $action = $data['action'] ?? null;
 $responseText = $data['response'] ?? null;
 $dateUpdated = date("Y-m-d H:i:s");
@@ -59,7 +59,7 @@ if ($action === "allow_again") {
    ========================================================= */
 if ($action === "update_status") {
 
-  if (!$id || !$transaction || !$status || $pay === null) {
+if (!$id || !$transaction || !$status) {
     echo json_encode(['Success' => false, 'message' => 'Incomplete data']);
     exit;
   }
@@ -78,7 +78,6 @@ if ($status === "Rejected") {
     $sql = "UPDATE requests 
             SET status = ?, 
                 dateupdated = ?, 
-                pay = ?, 
                 pickup = ?, 
                 response = ?, 
                 request_again = 0
@@ -91,7 +90,7 @@ if ($status === "Rejected") {
     exit;
   }
 
-  $stmt->bind_param("ssissis", $status, $dateUpdated, $pay, $pickup, $responseText, $id, $transaction);
+$stmt->bind_param("ssssis", $status, $dateUpdated, $pickup, $responseText, $id, $transaction);
   $stmt->execute();
 
   echo json_encode([
